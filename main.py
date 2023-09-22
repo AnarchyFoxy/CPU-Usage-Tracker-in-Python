@@ -21,6 +21,9 @@ program_running = True
 log_file = None
 log_mutex = threading.Lock()
 
+iteration = 0
+continue_flag = True
+
 # Funkcja odczytu danych o zużyciu procesora
 def read_cpu_data():
     global curr_cpu_data
@@ -35,10 +38,25 @@ def read_cpu_data():
 
 # Funkcja wątku Reader
 def reader_thread():
+    global iteration, continue_flag, program_running
     while program_running:
         read_cpu_data()
         with data_ready:
             data_ready.notify()
+        iteration += 1
+
+        if iteration % 10 == 0:
+            print("Czy kontynuować? (n - kontynuuj, q - wyjdź)")
+            response = input()
+            if response == "n":
+                continue_flag = True
+                print("Kontynuowanie...")
+            elif response == "q":
+                print("Zakończono na żądanie użytkownika.")
+                program_running = False
+                with data_ready:
+                    data_ready.notify()
+
         time.sleep(1)
 
 # Funkcja wątku Analyzer
